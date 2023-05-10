@@ -10,10 +10,9 @@ import {merge} from "lodash";
  
      constructor() {
          this.config = {
-             allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'code']),
+             allowedTags: ['img', 'code'],
              allowedAttributes: {
-                 ...sanitizeHtml.defaults.allowedAttributes,
-                 '*': ['class', 'style', 'height', 'width'],
+                 '*': ['class', 'style', 'height', 'width']
              },
              parser: {
                  lowerCaseTags: true,

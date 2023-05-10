@@ -1,10 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { PostRepository } from "../repository/post.repository";
 import { PostEntity } from "../entities/post.entity";
-import { isFunction, isNil } from "lodash";
+import { isFunction, isNil, omit } from "lodash";
 import { EntityNotFoundError, IsNull, Not, SelectQueryBuilder } from "typeorm";
 import { PostOrderType } from "../constants";
-import { PaginateOptions } from "@/modules/database/types";
+import { PaginateOptions, QueryHook } from "@/modules/database/types";
+import { paginate } from "nestjs-typeorm-paginate";
 
 // src/modules/content/services/post.service.ts
 @Injectable()
@@ -18,7 +19,7 @@ export class PostService {
      */
     async paginate(options: PaginateOptions, callback?: QueryHook<PostEntity>) {
         const qb = await this.buildListQuery(this.repository.buildBaseQB(), options, callback);
-        return this.paginate(qb, options);
+        return paginate(qb, options);
     }
 
     /**
