@@ -4,13 +4,15 @@ import { toBoolean } from "@/modules/core/helpers";
 import { PaginateOptions } from "@/modules/database/types";
 import { Transform } from "class-transformer";
 import { PartialType } from "@nestjs/swagger";
-import { IsDateString, IsDefined, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsUUID, MaxLength, Min, ValidateIf } from "class-validator";
+import { IsBoolean, IsDateString, IsDefined, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsUUID, MaxLength, Min, ValidateIf } from "class-validator";
 import { PostOrderType } from "../constants";
 import { isNil, toNumber } from "lodash";
+import { DtoValidation } from "@/modules/core/decorators/dto-validation.decorator";
 
 /**
  * 文章分页查询验证
  */
+@DtoValidation({type: 'query'})
 export class QueryPostDto implements PaginateOptions {
     @Transform(({ value }) => toBoolean(value))
     @IsBoolean()
@@ -39,6 +41,7 @@ export class QueryPostDto implements PaginateOptions {
 /**
  * 文章创建验证
  */
+@DtoValidation({groups: ['create']})
 export class CreatePostDto {
     @MaxLength(255, {
         always: true,
@@ -73,6 +76,7 @@ export class CreatePostDto {
     @IsOptional({ always: true })
     keywords?: string[];
 
+    
     @IsUUID(undefined, {
         each: true,
         always: true,
@@ -91,12 +95,10 @@ export class CreatePostDto {
 /**
  * 文章更新验证
  */
+@DtoValidation({groups: ['update']})
 export class UpdatePostDto extends PartialType(CreatePostDto) {
     @IsUUID(undefined, { groups: ['update'], message: '文章ID格式错误' })
     @IsDefined({ groups: ['update'], message: '文章ID必须指定' })
     id!: string;
 }
 
-function IsBoolean(): (target: QueryPostDto, propertyKey: "isPublished") => void {
-    throw new Error("Function not implemented.");
-}

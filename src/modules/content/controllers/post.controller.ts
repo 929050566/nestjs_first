@@ -2,9 +2,10 @@ import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query
 import { PostService } from "../services/post.service";
 import { PaginateOptions } from "@/modules/database/types";
 import { AppIntercepter } from "@/modules/core/prividers/app.interceptor";
+import { CreatePostDto, QueryPostDto, UpdatePostDto } from "../dtos/post.dto";
 
 // src/modules/content/controllers/post.controller.ts	
-@UseInterceptors(AppIntercepter)
+// @UseInterceptors(AppIntercepter)
 @Controller('posts')
 export class PostController {
     constructor(protected service: PostService) {}
@@ -12,14 +13,8 @@ export class PostController {
     @Get()
     @SerializeOptions({ groups: ['post-list']})
     async list(
-        @Query(
-            new ValidationPipe({
-                transform: true,
-                forbidUnknownValues: true,
-                validationError: {target: false},
-            })
-        )
-        options: PaginateOptions,
+        @Query()
+        options: QueryPostDto,
     ) {
         return this.service.paginate(options);
     }
@@ -36,15 +31,8 @@ export class PostController {
     @Post()
     @SerializeOptions({ groups: ['post-detail']})
     async store(
-        @Body(
-            new ValidationPipe({
-                transform: true,
-                forbidUnknownValues: true,
-                validationError: {target: false},
-                groups:['create'],
-            })
-        )
-        data: Record<string, any>,
+        @Body()
+        data: CreatePostDto,
     ) {
         return this.service.create(data);
     }
@@ -52,15 +40,8 @@ export class PostController {
     @Patch()
     @SerializeOptions({ groups: ['post-detail']})
     async update(
-        @Body(
-            new ValidationPipe({
-                transform: true,
-                forbidUnknownValues: true,
-                validationError: { target: false },
-                groups: ['update'],
-            }),
-        )
-        data: Record<string, any>,
+        @Body()
+        data: UpdatePostDto,
     ) {
         return this.service.update(data);
     }
