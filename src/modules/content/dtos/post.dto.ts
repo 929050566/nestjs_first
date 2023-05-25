@@ -8,6 +8,8 @@ import { IsBoolean, IsDateString, IsDefined, IsEnum, IsNotEmpty, IsNumber, IsOpt
 import { PostOrderType } from "../constants";
 import { isNil, toNumber } from "lodash";
 import { DtoValidation } from "@/modules/core/decorators/dto-validation.decorator";
+import { IsDataExist } from "../match/database.contraint";
+import { PostEntity } from "../entities/post.entity";
 
 /**
  * 文章分页查询验证
@@ -49,6 +51,7 @@ export class CreatePostDto {
     })
     @IsNotEmpty({ groups: ['create'], message: '文章标题必须填写' })
     @IsOptional({ groups: ['update'] })
+    @IsDataExist(PostEntity , { groups: ['create'], message: '文章标题已经存在' })
     title!: string;
 
     @IsNotEmpty({ groups: ['create'], message: '文章内容必须填写' })
