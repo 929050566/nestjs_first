@@ -10,6 +10,7 @@ import { isNil, toNumber } from "lodash";
 import { DtoValidation } from "@/modules/core/decorators/dto-validation.decorator";
 import { IsDataExist } from "../match/database.contraint";
 import { PostEntity } from "../entities/post.entity";
+import { SelectTrashMode } from "@/modules/core/constants";
 
 /**
  * 文章分页查询验证
@@ -26,6 +27,10 @@ export class QueryPostDto implements PaginateOptions {
     })
     @IsOptional()
     orderBy?: PostOrderType;
+    
+    @IsEnum(SelectTrashMode)
+    @IsOptional()
+    trashed?: SelectTrashMode
 
     @Transform(({ value }) => toNumber(value))
     @Min(1, { message: '当前页必须大于1' })
@@ -51,7 +56,7 @@ export class CreatePostDto {
     })
     @IsNotEmpty({ groups: ['create'], message: '文章标题必须填写' })
     @IsOptional({ groups: ['update'] })
-    @IsDataExist(PostEntity , { groups: ['create'], message: '文章标题已经存在' })
+    @IsDataExist(PostEntity , { groups: ['create'], message: '文章标题已经存在22' })
     title!: string;
 
     @IsNotEmpty({ groups: ['create'], message: '文章内容必须填写' })
@@ -104,4 +109,5 @@ export class UpdatePostDto extends PartialType(CreatePostDto) {
     @IsDefined({ groups: ['update'], message: '文章ID必须指定' })
     id!: string;
 }
+
 

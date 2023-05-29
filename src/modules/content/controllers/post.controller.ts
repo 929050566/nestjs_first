@@ -3,6 +3,8 @@ import { PostService } from "../services/post.service";
 import { PaginateOptions } from "@/modules/database/types";
 import { AppIntercepter } from "@/modules/core/prividers/app.interceptor";
 import { CreatePostDto, QueryPostDto, UpdatePostDto } from "../dtos/post.dto";
+import { DeleteDto } from "../dtos/delete.dto";
+import { DeleteWithTrashDto, RestoreDto } from "../dtos/deletewithtrash.dto";
 
 // src/modules/content/controllers/post.controller.ts	
 // @UseInterceptors(AppIntercepter)
@@ -46,9 +48,39 @@ export class PostController {
         return this.service.update(data);
     }
 
-    @Delete(':id')
+    // @Delete(':id')
+    // @SerializeOptions({ groups: ['post-detail']})
+    // async delete(@Param('id', new ParseUUIDPipe()) id: string) {
+    //     return this.service.delete(id);
+    // }
+
+    // ...
+    @Delete()
+    @SerializeOptions({ groups: ['post-list'] })
+    async delete(
+        @Body()
+        data: DeleteWithTrashDto,
+    ) {
+        const { ids, trash } = data;
+        return this.service.deleteTrash(ids, trash);
+    }
+
+    @Patch('restore')
+    @SerializeOptions({ groups: ['post-list'] })
+    async restore(
+        @Body()
+        data: RestoreDto,
+    ) {
+        const { ids } = data;
+        return this.service.restore(ids);
+    }
+
+    @Delete(':ids')
     @SerializeOptions({ groups: ['post-detail']})
-    async delete(@Param('id', new ParseUUIDPipe()) id: string) {
-        return this.service.delete(id);
+    async deleteV2(
+        @Query()
+        options: DeleteDto,
+    ){
+        return this.service.deleteBatch(options.ids);
     }
 }

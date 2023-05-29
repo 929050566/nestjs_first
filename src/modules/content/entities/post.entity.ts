@@ -1,6 +1,6 @@
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { PostBodyType } from "../constants";
-import { Exclude, Expose } from "class-transformer";
+import { Exclude, Expose, Type } from "class-transformer";
 
 // src/modules/content/entities/post.entity.ts
 @Exclude()
@@ -54,4 +54,12 @@ export class PostEntity extends BaseEntity {
         comment: '更新时间',
     })
     updatedAt!: Date;
+
+     // ...
+     @Expose()
+     @Type(() => Date)
+     @DeleteDateColumn({
+         comment: '删除时间',
+     })
+    deleteAt!: Date;
 }
