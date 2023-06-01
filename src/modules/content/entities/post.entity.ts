@@ -1,4 +1,4 @@
-import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { PostBodyType } from "../constants";
 import { Exclude, Expose, Type } from "class-transformer";
 
@@ -13,10 +13,12 @@ export class PostEntity extends BaseEntity {
 
     @Expose()
     @Column({ comment: '文章标题' })
+    @Index({ fulltext: true})
     title!: string;
 
     @Expose({ groups: ['post-detail'] })
     @Column({ comment: '文章内容', type: 'longtext' })
+    @Index({ fulltext: true})
     body!: string;
 
     @Expose()
@@ -44,6 +46,7 @@ export class PostEntity extends BaseEntity {
     @Expose()
     @Column({ comment: '文章排序', default: 0 })
     customOrder!: number;
+
     @Expose()
     @CreateDateColumn({
         comment: '创建时间',
@@ -62,4 +65,9 @@ export class PostEntity extends BaseEntity {
          comment: '删除时间',
      })
     deleteAt!: Date;
+    
+    // @Expose()
+    // @Column({ comment: '文章描述', nullable: true })
+    // @Index({ fulltext: true })
+    // categories!: String[];
 }

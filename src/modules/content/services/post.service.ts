@@ -1,24 +1,42 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { PostRepository } from "../repository/post.repository";
 import { PostEntity } from "../entities/post.entity";
 import { isFunction, isNil, omit } from "lodash";
 import { EntityNotFoundError, In, IsNull, Not, SelectQueryBuilder } from "typeorm";
 import { PostOrderType } from "../constants";
-import { PaginateOptions, QueryHook } from "@/modules/database/types";
+import { PaginateOptions, QueryHook, } from "@/modules/database/types";
 import { paginate } from "nestjs-typeorm-paginate";
 import { SelectTrashMode } from "@/modules/core/constants";
+import { SearchService } from "./search.service";
+import { SearchType } from "../types/types";
+import { QueryPostDto } from "../dtos/post.dto";
+import { classToPlain, plainToInstance } from "class-transformer";
 
 // src/modules/content/services/post.service.ts
 @Injectable()
 export class PostService {
-    constructor(protected repository: PostRepository) {}
+    constructor(protected repository: PostRepository,
+        protected searchService?: SearchService,
+        protected search_type: SearchType = 'against') {}
 
     /**
      * 获取分页数据
      * @param options 分页选项
      * @param callback 添加额外的查询
      */
-    async paginate(options: PaginateOptions, callback?: QueryHook<PostEntity>) {
+    async paginate(options: QueryPostDto, callback?: QueryHook<PostEntity>) {
+        if (
+            !isNil(this.searchService) &&
+            !isNil(options.search) &&
+            this.search_type === 'elastic'
+        ){
+            const { search: text, page, limit } = options;
+            const results = await this.searchService.search(text);
+            const ids = results.map((result) => result.id);
+            const posts =
+                ids.length <= 0 ? [] : await this.repository.find({ where: { id: In(ids) } });
+            return manualPaginate({ page, limit }, posts);
+        }
         const qb = await this.buildListQuery(this.repository.buildBaseQB(), options, callback);
         return paginate(qb, options);
     }
@@ -42,8 +60,16 @@ export class PostService {
      * @param data
      */
     async create(data: Record<string, any>) {
+        if (!isNil(this.searchService)) {
+            try {
+                const dataPlain = plainToInstance(PostEntity, data)
+                console.log(dataPlain)
+                await this.searchService.create(dataPlain);
+            } catch (err) {
+                throw new InternalServerErrorException(err);
+            }
+        }
         const item = await this.repository.save(data);
-
         return this.detail(item.id);
     }
 
@@ -137,6 +163,30 @@ export class PostService {
                       publishedAt: IsNull(),
                   });
         }
+        const search = options.search
+        if (!isNil(search)) {
+            if (this.search_type === 'like') {
+                qb.andWhere('title LIKE :search', { search: `%${search}%` })
+                    .orWhere('body LIKE :search', { search: `%${search}%` })
+                    .orWhere('summary LIKE :search', { search: `%${search}%` })
+                    .orWhere('post.categories LIKE :search', {
+                        search: `%${search}%`,
+                    });
+            } else {
+                qb.andWhere('MATCH(title) AGAINST (:search IN BOOLEAN MODE)', {
+                    search: `${search}*`,
+                })
+                    .orWhere('MATCH(body) AGAINST (:search IN BOOLEAN MODE)', {
+                        search: `${search}*`,
+                    })
+                    .orWhere('MATCH(summary) AGAINST (:search IN BOOLEAN MODE)', {
+                        search: `${search}*`,
+                    })
+                    .orWhere('MATCH(categories.name) AGAINST (:search IN BOOLEAN MODE)', {
+                        search: `${search}*`,
+                    });
+            }
+        }
         newQb = this.queryOrderBy(newQb, orderBy);
         if (callback) return callback(newQb);
         return newQb;
@@ -165,3 +215,7 @@ export class PostService {
         }
     }
 }
+function manualPaginate(arg0: { page: number; limit: number; }, posts: PostEntity[]) {
+    return posts;
+}
+
