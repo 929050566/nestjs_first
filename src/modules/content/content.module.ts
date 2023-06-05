@@ -17,6 +17,10 @@ import { ElasticModule } from "../elastic/elastic.module";
 import { elastic } from "@/config/elastic.config";
 import { CategoryService } from "./services/category.service";
 import { CategoryRepository } from "./repository/category.repository";
+import { CategoryEntity } from "./entities/category.entiry";
+import { CommentEntity } from "./entities/comment.entity";
+import { CommentRepository } from "./repository/comment.repository";
+import { CommentService } from "./services/comment.service";
 
 // src/modules/content/content.module.ts
 // @Module({
@@ -53,6 +57,8 @@ export class ContentModule {
     const providers: ModuleMetadata['providers'] = [
         SanitizeService,
         PostSubscriber,
+        CategoryService,
+        CommentService,
         {
             provide: PostService,
             inject: [
@@ -97,8 +103,8 @@ export class ContentModule {
     return {
         module: ContentModule,
         imports: [
-            TypeOrmModule.forFeature([PostEntity]),
-            DatabaseModule.forRepository([PostRepository]),
+            TypeOrmModule.forFeature([PostEntity, CategoryEntity, CommentEntity]),
+            DatabaseModule.forRepository([PostRepository, CategoryRepository, CommentRepository]),
             ElasticModule.forRoot(elastic)
         ],
         controllers: [PostController],

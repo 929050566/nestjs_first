@@ -7,28 +7,23 @@ import { PostEntity } from "./post.entity";
 @Tree('materialized-path')
 @Entity('content_comments')
 export class CommentEntity extends BaseEntity {
-
     @Expose()
     @PrimaryGeneratedColumn('uuid')
-    id!: string;
+    id: string;
 
     @Expose()
     @Column({ comment: '评论内容', type: 'longtext' })
-    body!: string;
+    body: string;
 
     @Expose()
-    @Column({ comment: '关联文章'})
-    postId!: string;
-
-    @Expose()
-    @Column({ comment: '路径'})
-    mpath?: string;
-
-    @Expose()
+    @Type(() => Date)
     @CreateDateColumn({
         comment: '创建时间',
     })
-    createdAt!: Date;
+    createdAt: Date;
+
+    @Expose()
+    depth = 0;
 
     @Expose()
     @ManyToOne((type) => PostEntity, (post) => post.comments, {
@@ -38,17 +33,13 @@ export class CommentEntity extends BaseEntity {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
     })
-    post!: PostEntity;
+    post: PostEntity;
 
     @TreeParent({ onDelete: 'CASCADE' })
-    parent!: CommentEntity | null;
+    parent: CommentEntity | null;
 
-    @Expose({ groups: ['category-tree'] })
-    @Type(() => CommentEntity)
+    @Expose()
     @TreeChildren({ cascade: true })
-    children!: CommentEntity[];
-    
-    @Expose({ groups: ['category-list'] })
-    depth = 0;
+    children: CommentEntity[];
 
 }
