@@ -21,6 +21,8 @@ import { CategoryEntity } from "./entities/category.entiry";
 import { CommentEntity } from "./entities/comment.entity";
 import { CommentRepository } from "./repository/comment.repository";
 import { CommentService } from "./services/comment.service";
+import { CategoryController } from "./controllers/category.controller";
+import { CommentController } from "./controllers/comment.controller";
 
 // src/modules/content/content.module.ts
 // @Module({
@@ -107,7 +109,7 @@ export class ContentModule {
             DatabaseModule.forRepository([PostRepository, CategoryRepository, CommentRepository]),
             ElasticModule.forRoot(elastic)
         ],
-        controllers: [PostController],
+        controllers: [PostController, CategoryController, CommentController],
         providers,
         exports: [
           PostService, DatabaseModule.forRepository([PostRepository])
