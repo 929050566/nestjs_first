@@ -15,6 +15,8 @@ import { SearchService } from "./services/search.service";
 import { ContentConfig } from "./types/types";
 import { ElasticModule } from "../elastic/elastic.module";
 import { elastic } from "@/config/elastic.config";
+import { CategoryService } from "./services/category.service";
+import { CategoryRepository } from "./repository/category.repository";
 
 // src/modules/content/content.module.ts
 // @Module({
@@ -56,13 +58,19 @@ export class ContentModule {
             inject: [
                 PostRepository,
                 { token: SearchService, optional: true },
+                CategoryService,
+                CategoryRepository,
             ],
             useFactory(
                 postRepository: PostRepository,
                 searchService?: SearchService,
+                categoryService?: CategoryService,
+                categoryRepository?: CategoryRepository,
             ) {
                 return new PostService(
                     postRepository,
+                    categoryRepository,
+                    categoryService,
                     searchService,
                     config.searchType,
                 );

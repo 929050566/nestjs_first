@@ -1,6 +1,8 @@
-import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinTable, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { PostBodyType } from "../constants";
 import { Exclude, Expose, Type } from "class-transformer";
+import { CategoryEntity } from "./category.entiry";
+import { CommentEntity } from "./comment.entity";
 
 // src/modules/content/entities/post.entity.ts
 @Exclude()
@@ -65,9 +67,16 @@ export class PostEntity extends BaseEntity {
          comment: '删除时间',
      })
     deleteAt!: Date;
+
+    @JoinTable()
+    categories: CategoryEntity[];
     
-    // @Expose()
-    // @Column({ comment: '文章描述', nullable: true })
-    // @Index({ fulltext: true })
-    // categories!: String[];
+    @OneToMany((type) => CommentEntity, (comment) => comment.post, {
+        cascade: true,
+    })
+    comments!: CommentEntity[];
+
+    @Expose()
+    commentCount!: number;
+    
 }
