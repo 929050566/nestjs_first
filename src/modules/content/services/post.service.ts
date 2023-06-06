@@ -13,6 +13,7 @@ import { SearchType } from "../types/types";
 import { QueryPostDto, UpdatePostDto } from "../dtos/post.dto";
 import { classToPlain, plainToInstance } from "class-transformer";
 import { CategoryService } from './category.service';
+import { manualPaginate } from '@/modules/database/helpers';
 
 // src/modules/content/services/post.service.ts
 @Injectable()
@@ -256,9 +257,4 @@ export class PostService {
 }
 
 
-
-
-function manualPaginate(arg0: { page: number; limit: number; }, posts: PostEntity[]) {
-    return posts;
-}
 

@@ -1,17 +1,23 @@
-import { DataSource, EventSubscriber } from "typeorm";
+import { DataSource, EventSubscriber, ObjectType } from "typeorm";
 import { SanitizeService } from "../services/sanitize.service";
 import { PostRepository } from "../repository/post.repository";
 import { PostEntity } from "../entities/post.entity";
 import { PostBodyType } from "../constants";
+import { BaseSubscriber } from "@/modules/database/base/base.subscriber";
 
 // src/modules/content/subscribers/post.subscriber.ts
 @EventSubscriber()
-export class PostSubscriber {
+export class PostSubscriber extends BaseSubscriber<PostEntity>{
+
+    protected entity: ObjectType<PostEntity> = PostEntity;
+
     constructor(
         protected dataSource: DataSource,
         protected sanitizeService: SanitizeService,
         protected postRepository: PostRepository,
-    ) {}
+    ) {
+        super(dataSource)
+    }
 
     listenTo() {
         return PostEntity;

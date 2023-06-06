@@ -1,16 +1,14 @@
-import { BaseEntity, Column, Entity, ManyToMany, PrimaryGeneratedColumn, Tree, TreeChildren, TreeParent } from "typeorm";
+import { Column, Entity, ManyToMany, PrimaryGeneratedColumn, Tree, TreeChildren, TreeParent } from "typeorm";
 import { PostEntity } from "./post.entity";
 import { Exclude, Expose, Type } from "class-transformer";
+import { MyBaseEntity } from "@/modules/database/base/base.entity";
 
 // src/modules/content/entities/category.entity.ts
 @Exclude()
 @Tree('materialized-path')
 @Entity('content_categories')
-export class CategoryEntity extends BaseEntity {
-    @Expose()
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
-
+export class CategoryEntity extends MyBaseEntity {
+ 
     @Expose()
     @Column({ comment: '分类名称' })
     name: string;

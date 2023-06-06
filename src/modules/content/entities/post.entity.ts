@@ -1,18 +1,15 @@
-import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinTable, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinTable, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { PostBodyType } from "../constants";
 import { Exclude, Expose, Type } from "class-transformer";
 import { CategoryEntity } from "./category.entiry";
 import { CommentEntity } from "./comment.entity";
+import { MyBaseEntity } from "@/modules/database/base/base.entity";
 
 // src/modules/content/entities/post.entity.ts
 @Exclude()
 @Entity('content_posts')
-export class PostEntity extends BaseEntity {
-
-    @Expose()
-    @PrimaryGeneratedColumn('uuid')
-    id!: string;
-
+export class PostEntity extends MyBaseEntity {
+   
     @Expose()
     @Column({ comment: '文章标题' })
     @Index({ fulltext: true})

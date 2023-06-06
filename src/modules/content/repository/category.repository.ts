@@ -2,88 +2,16 @@ import { CustomRepository } from "@/modules/database/decorators/repository.decor
 import { CategoryEntity } from "../entities/category.entiry";
 import { FindOptionsUtils, FindTreeOptions, TreeRepository } from "typeorm";
 import { pick, unset } from "lodash";
+import { BaseTreeRepository } from "@/modules/database/base/basetree.repostory";
+import { TreeChildrenResolve } from "@/modules/database/constants";
 
 // src/modules/content/repositories/category.repository.ts
 @CustomRepository(CategoryEntity)
-export class CategoryRepository extends TreeRepository<CategoryEntity> {
-    /**
-     * 构建基础查询器
-     */
-    buildBaseQB() {
-        return this.createQueryBuilder('category').leftJoinAndSelect('category.parent', 'parent');
-    }
-
-    /**
-     * 查询树形分类
-     * @param options
-     */
-    async findTrees(options?: FindTreeOptions) {
-        const roots = await this.findRoots(options);
-        await Promise.all(roots.map((root) => this.findDescendantsTree(root, options)));
-        return roots;
-    }
-
-      /**
-     * 查询顶级分类
-     * @param options
-     */
-      findRoots(options?: FindTreeOptions) {
-        const escapeAlias = (alias: string) => this.manager.connection.driver.escape(alias);
-        const escapeColumn = (column: string) => this.manager.connection.driver.escape(column);
-
-        const joinColumn = this.metadata.treeParentRelation!.joinColumns[0];
-        const parentPropertyName = joinColumn.givenDatabaseName || joinColumn.databaseName;
-
-        const qb = this.buildBaseQB().orderBy('category.customOrder', 'ASC');
-        qb.where(`${escapeAlias('category')}.${escapeColumn(parentPropertyName)} IS NULL`);
-        FindOptionsUtils.applyOptionsToTreeQueryBuilder(qb, pick(options, ['relations', 'depth']));
-        return qb.getMany();
-    }
+export class CategoryRepository extends BaseTreeRepository<CategoryEntity> {
 
 
-    /**
-     * 创建后代查询器
-     * @param alias
-     * @param closureTableAlias
-     * @param entity
-     */
-    createDescendantsQueryBuilder(
-        alias: string,
-        closureTableAlias: string,
-        entity: CategoryEntity,
-    ) {
-        return super
-            .createDescendantsQueryBuilder(alias, closureTableAlias, entity)
-            .orderBy(`${alias}.customOrder`, 'ASC');
-    }
+    protected _qbName = "category";
+    protected orderBy = "createAt";
+    protected _childrenResolve = TreeChildrenResolve.UP;
 
-    /**
-     * 创建祖先查询器
-     * @param alias
-     * @param closureTableAlias
-     * @param entity
-     */
-    createAncestorsQueryBuilder(alias: string, closureTableAlias: string, entity: CategoryEntity) {
-        return super
-            .createAncestorsQueryBuilder(alias, closureTableAlias, entity)
-            .orderBy(`${alias}.customOrder`, 'ASC');
-    }
-
-    /**
-     * 打平并展开树
-     * @param trees
-     * @param depth
-     */
-    async toFlatTrees(trees: CategoryEntity[], depth = 0, parent: CategoryEntity | null = null) {
-        const data: Omit<CategoryEntity, 'children'>[] = [];
-        for (const item of trees) {
-            item.depth = depth;
-            item.parent = parent; 
-            const { children } = item;
-            unset(item, 'children');
-            data.push(item);
-            data.push(...(await this.toFlatTrees(children, depth + 1, item)));
-        }
-        return data as CategoryEntity[];
-    }
 }
