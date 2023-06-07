@@ -1,10 +1,16 @@
 // src/modules/database/helpers.ts
 
-import { DataSource, ObjectLiteral, ObjectType, Repository, SelectQueryBuilder } from "typeorm";
-import { OrderQueryType, PaginateOptions, PaginateReturn } from "./types";
-import { isNil } from "lodash";
-import { CUSTOM_REPOSITORY_METADATA } from "./constants";
-import { ClassType, RepositoryType } from "../content/types/global";
+import {
+    DataSource,
+    ObjectLiteral,
+    ObjectType,
+    Repository,
+    SelectQueryBuilder,
+} from 'typeorm';
+import { OrderQueryType, PaginateOptions, PaginateReturn } from './types';
+import { isNil } from 'lodash';
+import { CUSTOM_REPOSITORY_METADATA } from './constants';
+import { ClassType, RepositoryType } from '../content/types/global';
 
 /**
  * 分页函数
@@ -23,7 +29,10 @@ export const paginate = async <E extends ObjectLiteral>(
         totalItems % options.limit === 0
             ? Math.floor(totalItems / options.limit)
             : Math.floor(totalItems / options.limit) + 1;
-    const remainder = totalItems % options.limit !== 0 ? totalItems % options.limit : options.limit;
+    const remainder =
+        totalItems % options.limit !== 0
+            ? totalItems % options.limit
+            : options.limit;
     const itemCount = options.page < totalPages ? options.limit : remainder;
     return {
         items,
@@ -36,7 +45,6 @@ export const paginate = async <E extends ObjectLiteral>(
         },
     };
 };
-
 
 /**
  * 数据手动分页函数
@@ -52,10 +60,13 @@ export function manualPaginate<E extends ObjectLiteral>(
     const totalItems = data.length;
     const totalRst = totalItems / limit;
     const totalPages =
-        totalRst > Math.floor(totalRst) ? Math.floor(totalRst) + 1 : Math.floor(totalRst);
+        totalRst > Math.floor(totalRst)
+            ? Math.floor(totalRst) + 1
+            : Math.floor(totalRst);
     let itemCount = 0;
     if (page <= totalPages) {
-        itemCount = page === totalPages ? totalItems - (totalPages - 1) * limit : limit;
+        itemCount =
+            page === totalPages ? totalItems - (totalPages - 1) * limit : limit;
         const start = (page - 1) * limit;
         items = data.slice(start, start + itemCount);
     }
@@ -83,7 +94,8 @@ export const getOrderByQuery = <E extends ObjectLiteral>(
     orderBy?: OrderQueryType,
 ) => {
     if (isNil(orderBy)) return qb;
-    if (typeof orderBy === 'string') return qb.orderBy(`${alias}.${orderBy}`, 'DESC');
+    if (typeof orderBy === 'string')
+        return qb.orderBy(`${alias}.${orderBy}`, 'DESC');
     if (Array.isArray(orderBy)) {
         const i = 0;
         for (const item of orderBy) {
@@ -99,7 +111,10 @@ export const getOrderByQuery = <E extends ObjectLiteral>(
         }
         return qb;
     }
-    return qb.orderBy(`${alias}.${(orderBy as any).name}`, (orderBy as any).order);
+    return qb.orderBy(
+        `${alias}.${(orderBy as any).name}`,
+        (orderBy as any).order,
+    );
 };
 
 /**
@@ -107,7 +122,10 @@ export const getOrderByQuery = <E extends ObjectLiteral>(
  * @param dataSource 数据连接池
  * @param Repo repository类
  */
-export const getCustomRepository = <T extends RepositoryType<E>, E extends ObjectLiteral>(
+export const getCustomRepository = <
+    T extends RepositoryType<E>,
+    E extends ObjectLiteral,
+>(
     dataSource: DataSource,
     Repo: ClassType<T>,
 ): T => {

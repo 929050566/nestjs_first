@@ -1,19 +1,23 @@
-import { PostEntity } from "../entities/post.entity";
+import { PostEntity } from '../entities/post.entity';
+import { ClassToPlain } from './global';
 
 // src/modules/content/types.ts
 export type SearchType = 'like' | 'against' | 'elastic';
 
 // src/modules/content/types.ts
 export interface ContentConfig {
-    searchType?: SearchType;
+  searchType?: SearchType;
 }
 
 // src/config/content.config.ts
 export const content = (): ContentConfig => ({
-    searchType: 'elastic',
+  searchType: 'elastic',
 });
 
 // src/modules/content/types.ts
-export type PostSearchBody = Pick<ClassToPlain<PostEntity>, 'title' | 'body' | 'summary'> & {
-    // categories: string;
+export type PostSearchBody = Pick<
+  ClassToPlain<PostEntity>,
+  'title' | 'body' | 'summary'
+> & {
+  // categories: string;
 };

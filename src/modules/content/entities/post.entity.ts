@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinTable, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { AfterLoad, Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { PostBodyType } from "../constants";
 import { Exclude, Expose, Type } from "class-transformer";
 import { CategoryEntity } from "./category.entiry";
@@ -9,15 +9,15 @@ import { MyBaseEntity } from "@/modules/database/base/base.entity";
 @Exclude()
 @Entity('content_posts')
 export class PostEntity extends MyBaseEntity {
-   
+
     @Expose()
     @Column({ comment: '文章标题' })
-    @Index({ fulltext: true})
+    @Index({ fulltext: true })
     title!: string;
 
     @Expose({ groups: ['post-detail'] })
     @Column({ comment: '文章内容', type: 'longtext' })
-    @Index({ fulltext: true})
+    @Index({ fulltext: true })
     body!: string;
 
     @Expose()
@@ -57,17 +57,23 @@ export class PostEntity extends MyBaseEntity {
     })
     updatedAt!: Date;
 
-     // ...
-     @Expose()
-     @Type(() => Date)
-     @DeleteDateColumn({
-         comment: '删除时间',
-     })
+    // ...
+    @Expose()
+    @Type(() => Date)
+    @DeleteDateColumn({
+        comment: '删除时间',
+    })
     deleteAt!: Date;
 
+    @Expose()
+    @Type(() => CategoryEntity)
+    @ManyToMany(() => CategoryEntity, (category) => category.posts, {
+        // 在新增文章时,如果所属分类不存在则直接创建
+        cascade: true,
+    })
     @JoinTable()
     categories: CategoryEntity[];
-    
+
     @OneToMany((type) => CommentEntity, (comment) => comment.post, {
         cascade: true,
     })
@@ -75,5 +81,12 @@ export class PostEntity extends MyBaseEntity {
 
     @Expose()
     commentCount!: number;
-    
+
+    @AfterLoad()
+    generateCount(): void {
+        if (this.body) {
+            console.log("测试")
+        }
+    }
+
 }

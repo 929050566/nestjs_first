@@ -1,41 +1,39 @@
-import { Injectable } from "@nestjs/common";
-import { CategoryRepository } from "../repository/category.repository";
-import { CreateCategoryDto, QueryCategoryDto, UpdateCategoryDto } from "../dtos/category.dto";
-import { treePaginate } from "@/modules/core/helpers/helper";
-import { isNil, omit } from "lodash";
-import { CategoryEntity } from "../entities/category.entiry";
-import { EntityNotFoundError } from "typeorm";
+import { Injectable } from '@nestjs/common';
+import { CategoryRepository } from '../repository/category.repository';
+import {
+    CreateCategoryDto,
+    QueryCategoryDto,
+    QueryCategoryTreeDto,
+    UpdateCategoryDto,
+} from '../dtos/category.dto';
+import { treePaginate } from '@/modules/core/helpers/helper';
+import { isNil, omit } from 'lodash';
+import { CategoryEntity } from '../entities/category.entiry';
+import { EntityNotFoundError } from 'typeorm';
+import { BaseService } from '@/modules/database/base/base.service';
+import { SelectTrashMode } from '@/modules/core/constants';
 
 // src/modules/content/services/category.service.ts
 @Injectable()
-export class CategoryService {
-    constructor(protected repository: CategoryRepository) {}
-
+export class CategoryService extends BaseService<
+    CategoryEntity,
+    CategoryRepository
+> {
+    protected enableTrash = true;
+    constructor(protected repository: CategoryRepository) {
+        super(repository);
+    }
     /**
      * 查询分类树
      */
-    async findTrees() {
-        return this.repository.findTrees();
+    async findTrees(options: QueryCategoryTreeDto) {
+        const { trashed = SelectTrashMode.NONE } = options;
+        return this.repository.findTrees({
+            withTrashed:
+                trashed === SelectTrashMode.ALL || trashed === SelectTrashMode.ONLY,
+            onlyTrashed: trashed === SelectTrashMode.ONLY,
+        });
     }
-
-    /**
-     * 获取分页数据
-     * @param options 分页选项
-     */
-    async paginate(options: QueryCategoryDto) {
-        const tree = await this.repository.findTrees();
-        const data = await this.repository.toFlatTrees(tree);
-        return treePaginate(options, data);
-    }
-
-    /**
-     * 获取数据详情
-     * @param id
-     */
-    async detail(id: string) {
-        return this.repository.findOneByOrFail({ id });
-    }
-
     /**
      * 新增分类
      * @param data
@@ -47,7 +45,6 @@ export class CategoryService {
         });
         return this.detail(item.id);
     }
-
     /**
      * 更新分类
      * @param data
@@ -70,28 +67,6 @@ export class CategoryService {
         }
         return cat;
     }
-
-    /**
-     * 删除分类
-     * @param id
-     */
-    async delete(id: string) {
-        const item = await this.repository.findOneOrFail({
-            where: { id },
-            relations: ['parent', 'children'],
-        });
-        // 把子分类提升一级
-        if (!isNil(item.children) && item.children.length > 0) {
-            const nchildren = [...item.children].map((c) => {
-                c.parent = item.parent;
-                return item;
-            });
-
-            await this.repository.save(nchildren);
-        }
-        return this.repository.remove(item);
-    }
-
     /**
      * 获取请求传入的父分类
      * @param current 当前分类的ID
@@ -104,7 +79,10 @@ export class CategoryService {
             if (id === null) return null;
             parent = await this.repository.findOne({ where: { id } });
             if (!parent)
-                throw new EntityNotFoundError(CategoryEntity, `Parent category ${id} not exists!`);
+                throw new EntityNotFoundError(
+                    CategoryEntity,
+                    `Parent category ${id} not exists!`,
+                );
         }
         return parent;
     }

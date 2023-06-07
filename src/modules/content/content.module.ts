@@ -53,67 +53,67 @@ import { CommentController } from "./controllers/comment.controller";
 export class ContentModule {
   static forRoot(configRegister?: () => ContentConfig): DynamicModule {
     const config: Required<ContentConfig> = {
-        searchType: 'elastic',
-        ...(configRegister ? configRegister() : {}),
+      searchType: 'against',
+      ...(configRegister ? configRegister() : {}),
     };
     const providers: ModuleMetadata['providers'] = [
-        SanitizeService,
-        PostSubscriber,
-        CategoryService,
-        CommentService,
-        {
-            provide: PostService,
-            inject: [
-                PostRepository,
-                { token: SearchService, optional: true },
-                CategoryService,
-                CategoryRepository,
-            ],
-            useFactory(
-                postRepository: PostRepository,
-                searchService?: SearchService,
-                categoryService?: CategoryService,
-                categoryRepository?: CategoryRepository,
-            ) {
-                return new PostService(
-                    postRepository,
-                    categoryRepository,
-                    categoryService,
-                    searchService,
-                    config.searchType,
-                );
-            },
+      SanitizeService,
+      PostSubscriber,
+      CategoryService,
+      CommentService,
+      {
+        provide: PostService,
+        inject: [
+          PostRepository,
+          { token: SearchService, optional: true },
+          CategoryService,
+          CategoryRepository,
+        ],
+        useFactory(
+          postRepository: PostRepository,
+          searchService?: SearchService,
+          categoryService?: CategoryService,
+          categoryRepository?: CategoryRepository,
+        ) {
+          return new PostService(
+            postRepository,
+            categoryRepository,
+            categoryService,
+            searchService,
+            config.searchType,
+          );
         },
-        {
-            provide: APP_PIPE,
-            useValue: new AppPipe({
-              transform: true,
-              forbidUnknownValues: true,
-              validationError: { target: false },
-            })
-          },
-          {
-            provide: APP_INTERCEPTOR,
-            useClass: AppIntercepter,
-          },
-          {
-            provide: APP_FILTER,
-            useClass: AppFilter
-          }
+      },
+      {
+        provide: APP_PIPE,
+        useValue: new AppPipe({
+          transform: true,
+          forbidUnknownValues: true,
+          validationError: { target: false },
+        })
+      },
+      {
+        provide: APP_INTERCEPTOR,
+        useClass: AppIntercepter,
+      },
+      {
+        provide: APP_FILTER,
+        useClass: AppFilter
+      }
     ];
     if (config.searchType === 'elastic') providers.push(SearchService);
     return {
-        module: ContentModule,
-        imports: [
-            TypeOrmModule.forFeature([PostEntity, CategoryEntity, CommentEntity]),
-            DatabaseModule.forRepository([PostRepository, CategoryRepository, CommentRepository]),
-            ElasticModule.forRoot(elastic)
-        ],
-        controllers: [PostController, CategoryController, CommentController],
-        providers,
-        exports: [
-          PostService, DatabaseModule.forRepository([PostRepository])
-        ],
+      module: ContentModule,
+      imports: [
+        TypeOrmModule.forFeature([PostEntity, CategoryEntity, CommentEntity]),
+        DatabaseModule.forRepository([PostRepository, CategoryRepository, CommentRepository]),
+        ElasticModule.forRoot(elastic)
+      ],
+      controllers: [PostController, CategoryController, CommentController],
+      providers,
+      exports: [
+        PostService, DatabaseModule.forRepository([PostRepository])
+      ],
     };
-}
+  }
 }

@@ -6,36 +6,45 @@ import { isArray, isFunction, isNil, omit } from "lodash";
 import { EntityNotFoundError, In, IsNull, Not, SelectQueryBuilder } from "typeorm";
 import { PostOrderType } from "../constants";
 import { PaginateOptions, QueryHook, } from "@/modules/database/types";
-import { paginate } from "nestjs-typeorm-paginate";
 import { SelectTrashMode } from "@/modules/core/constants";
 import { SearchService } from "./search.service";
 import { SearchType } from "../types/types";
 import { QueryPostDto, UpdatePostDto } from "../dtos/post.dto";
 import { classToPlain, plainToInstance } from "class-transformer";
 import { CategoryService } from './category.service';
-import { manualPaginate } from '@/modules/database/helpers';
+import { manualPaginate, paginate } from '@/modules/database/helpers';
+import { BaseService } from '@/modules/database/base/base.service';
+
+// 文章查询接口
+type FindParams = {
+    [key in keyof Omit<QueryPostDto, 'limit' | 'page'>]: QueryPostDto[key];
+};
 
 // src/modules/content/services/post.service.ts
 @Injectable()
-export class PostService {
+export class PostService extends BaseService<PostEntity, PostRepository, FindParams> {
+    protected enableTrash = true;
+
     constructor(protected repository: PostRepository,
-        protected categoryRepository: CategoryRepository ,
-        protected categoryService: CategoryService ,
+        protected categoryRepository: CategoryRepository,
+        protected categoryService: CategoryService,
         protected searchService?: SearchService,
         protected search_type: SearchType = 'against',
-        ) {}
+    ) {
+        super(repository);
+    }
 
     /**
-     * 获取分页数据
-     * @param options 分页选项
-     * @param callback 添加额外的查询
-     */
+        * 获取分页数据
+        * @param options 分页选项
+        * @param callback 添加额外的查询
+        */
     async paginate(options: QueryPostDto, callback?: QueryHook<PostEntity>) {
         if (
             !isNil(this.searchService) &&
             !isNil(options.search) &&
             this.search_type === 'elastic'
-        ){
+        ) {
             const { search: text, page, limit } = options;
             const results = await this.searchService.search(text);
             const ids = results.map((result) => result.id);
@@ -43,7 +52,7 @@ export class PostService {
                 ids.length <= 0 ? [] : await this.repository.find({ where: { id: In(ids) } });
             return manualPaginate({ page, limit }, posts);
         }
-        const qb = await this.buildListQuery(this.repository.buildBaseQB(), options, callback);
+        const qb = await this.buildListQB(this.repository.buildBaseQB(), options, callback);
         return paginate(qb, options);
     }
 
@@ -53,7 +62,7 @@ export class PostService {
      * @param callback 添加额外的查询
      */
     async detail(id: string, callback?: QueryHook<PostEntity>) {
-         let qb = this.repository.buildBaseQB();
+        let qb = this.repository.buildBaseQB();
         qb.where(`post.id = :id`, { id });
         qb = !isNil(callback) && isFunction(callback) ? await callback(qb) : qb;
         const item = await qb.getOne();
@@ -80,8 +89,8 @@ export class PostService {
             // 文章所属分类
             categories: isArray(data.categories)
                 ? await this.categoryRepository.findBy({
-                      id: In(data.categories),
-                  })
+                    id: In(data.categories),
+                })
                 : [],
         };
         const item = await this.repository.save(createPostDto);
@@ -132,20 +141,20 @@ export class PostService {
         return this.repository.remove(items);
     }
 
-      /**
-     * 删除文章
-     * @param id
-     */
-      async deleteBatch(ids: string[]) {
-        const items = await this.repository.find({ where:{id: In(ids)} });
+    /**
+   * 删除文章
+   * @param id
+   */
+    async deleteBatch(ids: string[]) {
+        const items = await this.repository.find({ where: { id: In(ids) } });
         return this.repository.remove(items);
     }
 
-     /**
-     * 恢复文章
-     * @param ids
-     */
-     async restore(ids: string[]) {
+    /**
+    * 恢复文章
+    * @param ids
+    */
+    async restore(ids: string[]) {
         const items = await this.repository.find({
             where: { id: In(ids) } as any,
             withDeleted: true,
@@ -181,11 +190,11 @@ export class PostService {
         if (typeof isPublished === 'boolean') {
             newQb = isPublished
                 ? newQb.where({
-                      publishedAt: Not(IsNull()),
-                  })
+                    publishedAt: Not(IsNull()),
+                })
                 : newQb.where({
-                      publishedAt: IsNull(),
-                  });
+                    publishedAt: IsNull(),
+                });
         }
         const search = options.search
         if (!isNil(search)) {
@@ -240,11 +249,11 @@ export class PostService {
         }
     }
 
-        /**
-     * 查询出分类及其后代分类下的所有文章的Query构建
-     * @param id
-     * @param qb
-     */
+    /**
+ * 查询出分类及其后代分类下的所有文章的Query构建
+ * @param id
+ * @param qb
+ */
     protected async queryByCategory(id: string, qb: SelectQueryBuilder<PostEntity>) {
         const root = await this.categoryService.detail(id);
         const tree = await this.categoryRepository.findDescendantsTree(root);

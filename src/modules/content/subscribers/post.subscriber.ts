@@ -7,16 +7,15 @@ import { BaseSubscriber } from "@/modules/database/base/base.subscriber";
 
 // src/modules/content/subscribers/post.subscriber.ts
 @EventSubscriber()
-export class PostSubscriber extends BaseSubscriber<PostEntity>{
+export class PostSubscriber {
 
-    protected entity: ObjectType<PostEntity> = PostEntity;
+    protected entity = PostEntity;
 
     constructor(
         protected dataSource: DataSource,
         protected sanitizeService: SanitizeService,
         protected postRepository: PostRepository,
     ) {
-        super(dataSource)
     }
 
     listenTo() {
@@ -28,8 +27,8 @@ export class PostSubscriber extends BaseSubscriber<PostEntity>{
      * @param entity
      */
     async afterLoad(entity: PostEntity) {
-        if (entity.type === PostBodyType.HTML) {
-            entity.body = this.sanitizeService.sanitize(entity.body);
-        }
+        // if (entity.type === PostBodyType.HTML) {
+        //     entity.body = this.sanitizeService.sanitize(entity.body);
+        // }
     }
 }
